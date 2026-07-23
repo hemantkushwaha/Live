@@ -1,0 +1,6 @@
+{
+  "name": "LiveConnect",
+  "description": "Real-time communication platform with live video streaming and private 1-on-1 WebRTC video calling.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
