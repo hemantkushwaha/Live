@@ -9,13 +9,16 @@ export function registerWebRtcHandlers(io: SocketIOServer, socket: Authenticated
   const user = socket.user;
   if (!user) return;
 
-  // Relay WebRTC Offer
-  socket.on(SOCKET_EVENTS.WEBRTC_OFFER, (payload: WebRTCSignalPayload) => {
+  const handleOffer = (payload: WebRTCSignalPayload) => {
     try {
       const targetUser = memoryStore.getUser(payload.targetUserId);
       if (targetUser?.socketId) {
         Logger.debug('WebRTC', `Relaying offer from ${user.id} to ${payload.targetUserId} (${payload.context})`);
         io.to(targetUser.socketId).emit(SOCKET_EVENTS.WEBRTC_OFFER, {
+          ...payload,
+          senderUserId: user.id,
+        });
+        io.to(targetUser.socketId).emit(SOCKET_EVENTS.SIGNAL_OFFER, {
           ...payload,
           senderUserId: user.id,
         });
@@ -25,15 +28,18 @@ export function registerWebRtcHandlers(io: SocketIOServer, socket: Authenticated
     } catch (err) {
       Logger.error('WebRTC', 'Error handling WebRTC offer', err);
     }
-  });
+  };
 
-  // Relay WebRTC Answer
-  socket.on(SOCKET_EVENTS.WEBRTC_ANSWER, (payload: WebRTCSignalPayload) => {
+  const handleAnswer = (payload: WebRTCSignalPayload) => {
     try {
       const targetUser = memoryStore.getUser(payload.targetUserId);
       if (targetUser?.socketId) {
         Logger.debug('WebRTC', `Relaying answer from ${user.id} to ${payload.targetUserId} (${payload.context})`);
         io.to(targetUser.socketId).emit(SOCKET_EVENTS.WEBRTC_ANSWER, {
+          ...payload,
+          senderUserId: user.id,
+        });
+        io.to(targetUser.socketId).emit(SOCKET_EVENTS.SIGNAL_ANSWER, {
           ...payload,
           senderUserId: user.id,
         });
@@ -43,10 +49,9 @@ export function registerWebRtcHandlers(io: SocketIOServer, socket: Authenticated
     } catch (err) {
       Logger.error('WebRTC', 'Error handling WebRTC answer', err);
     }
-  });
+  };
 
-  // Relay WebRTC ICE Candidate
-  socket.on(SOCKET_EVENTS.WEBRTC_ICE_CANDIDATE, (payload: WebRTCSignalPayload) => {
+  const handleIceCandidate = (payload: WebRTCSignalPayload) => {
     try {
       const targetUser = memoryStore.getUser(payload.targetUserId);
       if (targetUser?.socketId) {
@@ -54,9 +59,25 @@ export function registerWebRtcHandlers(io: SocketIOServer, socket: Authenticated
           ...payload,
           senderUserId: user.id,
         });
+        io.to(targetUser.socketId).emit(SOCKET_EVENTS.SIGNAL_ICE, {
+          ...payload,
+          senderUserId: user.id,
+        });
       }
     } catch (err) {
       Logger.error('WebRTC', 'Error handling ICE candidate', err);
     }
-  });
+  };
+
+  // Relay WebRTC Offer
+  socket.on(SOCKET_EVENTS.WEBRTC_OFFER, handleOffer);
+  socket.on(SOCKET_EVENTS.SIGNAL_OFFER, handleOffer);
+
+  // Relay WebRTC Answer
+  socket.on(SOCKET_EVENTS.WEBRTC_ANSWER, handleAnswer);
+  socket.on(SOCKET_EVENTS.SIGNAL_ANSWER, handleAnswer);
+
+  // Relay WebRTC ICE Candidate
+  socket.on(SOCKET_EVENTS.WEBRTC_ICE_CANDIDATE, handleIceCandidate);
+  socket.on(SOCKET_EVENTS.SIGNAL_ICE, handleIceCandidate);
 }

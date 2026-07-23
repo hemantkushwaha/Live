@@ -30,6 +30,8 @@ async function startServer() {
   // API Routes
   app.use('/api/auth', authRoutes);
   app.use('/api/lobby', lobbyRoutes);
+  app.use('/api/users', lobbyRoutes);
+  app.use('/api', lobbyRoutes);
 
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', service: 'LiveConnect Server', time: new Date().toISOString() });

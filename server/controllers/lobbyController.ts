@@ -13,4 +13,13 @@ export class LobbyController {
     const streams = memoryStore.getActiveStreams();
     return sendSuccess(res, 'Active streams retrieved', { streams });
   }
+
+  static getStreamById(req: AuthenticatedRequest, res: Response) {
+    const { roomId } = req.params;
+    const stream = memoryStore.getStreamRoom(roomId);
+    if (!stream) {
+      return res.status(404).json({ success: false, message: 'Stream room not found' });
+    }
+    return sendSuccess(res, 'Stream retrieved', { stream });
+  }
 }
