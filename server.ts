@@ -7,8 +7,7 @@ import { createServer as createViteServer } from 'vite';
 
 import { ENV } from './server/config/env';
 import { Logger } from './server/utils/logger';
-import authRoutes from './server/routes/authRoutes';
-import lobbyRoutes from './server/routes/lobbyRoutes';
+import healthRoutes from './server/routes/healthRoutes';
 import { initSocketServer } from './server/socket/socketHandler';
 
 async function startServer() {
@@ -27,17 +26,11 @@ async function startServer() {
   app.use(cors());
   app.use(express.json());
 
-  // API Routes
-  app.use('/api/auth', authRoutes);
-  app.use('/api/lobby', lobbyRoutes);
-  app.use('/api/users', lobbyRoutes);
-  app.use('/api', lobbyRoutes);
+  // API Routes (v1 and base health)
+  app.use('/api/v1', healthRoutes);
+  app.use('/api', healthRoutes);
 
-  app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', service: 'LiveConnect Server', time: new Date().toISOString() });
-  });
-
-  // Initialize Socket.io Connection Logic
+  // Initialize Socket.io Server Foundation
   initSocketServer(io);
 
   // Development vs Production Frontend Integration
@@ -57,7 +50,7 @@ async function startServer() {
     Logger.info('Server', 'Static production files served from /dist');
   }
 
-  // Bind exclusively to 0.0.0.0:3000 as required
+  // Bind to 0.0.0.0:3000
   server.listen(ENV.PORT, '0.0.0.0', () => {
     Logger.info('Server', `LiveConnect Server running at http://0.0.0.0:${ENV.PORT}`);
   });
