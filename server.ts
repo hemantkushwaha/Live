@@ -27,6 +27,7 @@ async function startServer() {
   // API Routes (v1 and base health)
   app.use('/api/v1', healthRoutes);
   app.use('/api', healthRoutes);
+  app.use('/', healthRoutes);
 
   // Global API Error Middleware
   app.use(errorHandlerMiddleware);

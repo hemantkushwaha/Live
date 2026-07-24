@@ -4,6 +4,7 @@ import { Radio, Server, Activity, CheckCircle2, XCircle, Loader2 } from 'lucide-
 import { APP_NAME, APP_VERSION } from '../shared/constants/constants';
 import { ApiSuccessResponse } from '../shared/helpers/response';
 import { apiClient } from './config/api';
+import { CLIENT_CONFIG } from './config/config';
 import { clientSocketOptions } from './config/socket';
 
 export default function App() {
@@ -32,8 +33,8 @@ export default function App() {
     checkHealth();
     const interval = setInterval(checkHealth, 10000);
 
-    // Initialize Socket.io Connection using clientSocketOptions
-    const socket: Socket = io(clientSocketOptions);
+    // Initialize Socket.io Connection using CLIENT_CONFIG and clientSocketOptions
+    const socket: Socket = io(CLIENT_CONFIG.socketUrl, clientSocketOptions);
 
     socket.on('connect', () => {
       setSocketConnected(true);
