@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { createSuccessResponse } from '../../shared/helpers/response';
 
 const router = Router();
 
@@ -7,11 +8,7 @@ const router = Router();
  * Health check endpoint for LiveConnect backend server
  */
 router.get('/health', (req: Request, res: Response) => {
-  res.status(200).json({
-    success: true,
-    message: 'Server running',
-    timestamp: new Date().toISOString(),
-  });
+  res.status(200).json(createSuccessResponse(undefined, 'Server running'));
 });
 
 export default router;

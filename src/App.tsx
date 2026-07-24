@@ -1,15 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { Radio, Server, Activity, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
-
-interface HealthResponse {
-  success: boolean;
-  message: string;
-  timestamp: string;
-}
+import { APP_NAME, APP_VERSION } from '../shared/constants/constants';
+import { ApiSuccessResponse } from '../shared/helpers/response';
+import { apiClient } from './config/api';
+import { clientSocketOptions } from './config/socket';
 
 export default function App() {
-  const [health, setHealth] = useState<HealthResponse | null>(null);
+  const [health, setHealth] = useState<ApiSuccessResponse | null>(null);
   const [healthError, setHealthError] = useState<string | null>(null);
   const [healthLoading, setHealthLoading] = useState<boolean>(true);
 
@@ -17,16 +15,12 @@ export default function App() {
   const [socketId, setSocketId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check Backend Health Endpoint (/api/v1/health)
+    // Check Backend Health Endpoint (/api/v1/health) using apiClient
     const checkHealth = async () => {
       try {
         setHealthLoading(true);
-        const res = await fetch('/api/v1/health');
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-        }
-        const data: HealthResponse = await res.json();
-        setHealth(data);
+        const res = await apiClient.get<ApiSuccessResponse>('/health');
+        setHealth(res.data);
         setHealthError(null);
       } catch (err) {
         setHealthError(err instanceof Error ? err.message : 'Failed to reach health endpoint');
@@ -38,11 +32,8 @@ export default function App() {
     checkHealth();
     const interval = setInterval(checkHealth, 10000);
 
-    // Initialize Socket.io Connection
-    const socket: Socket = io({
-      transports: ['websocket', 'polling'],
-      autoConnect: true,
-    });
+    // Initialize Socket.io Connection using clientSocketOptions
+    const socket: Socket = io(clientSocketOptions);
 
     socket.on('connect', () => {
       setSocketConnected(true);
@@ -63,14 +54,14 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-6 font-sans">
       <div className="w-full max-w-lg space-y-6">
-        {/* Header Header */}
+        {/* Header */}
         <div className="text-center space-y-2">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 mb-2">
             <Radio className="w-6 h-6 animate-pulse text-indigo-400" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">LiveConnect</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-white">{APP_NAME}</h1>
           <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-            Version 0.0.1
+            Version {APP_VERSION}
           </p>
         </div>
 
@@ -146,7 +137,7 @@ export default function App() {
 
         {/* Minimal Footer */}
         <div className="text-center text-xs text-slate-500 pt-2">
-          LiveConnect Bootstrap Foundation &bull; EWO-001
+          LiveConnect Shared Config & Core Infrastructure &bull; EWO-002
         </div>
       </div>
     </div>

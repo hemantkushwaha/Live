@@ -6,6 +6,9 @@ import { Server as SocketIOServer } from 'socket.io';
 import { createServer as createViteServer } from 'vite';
 
 import { ENV } from './server/config/env';
+import { SERVER_CONFIG } from './server/config/config';
+import { socketServerOptions } from './server/config/socket';
+import { errorHandlerMiddleware } from './server/config/api';
 import { Logger } from './server/utils/logger';
 import healthRoutes from './server/routes/healthRoutes';
 import { initSocketServer } from './server/socket/socketHandler';
@@ -14,21 +17,19 @@ async function startServer() {
   const app = express();
   const server = http.createServer(app);
 
-  // Configure Socket.io with CORS
-  const io = new SocketIOServer(server, {
-    cors: {
-      origin: '*',
-      methods: ['GET', 'POST'],
-    },
-  });
+  // Configure Socket.io with centralized socket options
+  const io = new SocketIOServer(server, socketServerOptions);
 
   // Basic Middlewares
-  app.use(cors());
+  app.use(cors(SERVER_CONFIG.cors));
   app.use(express.json());
 
   // API Routes (v1 and base health)
   app.use('/api/v1', healthRoutes);
   app.use('/api', healthRoutes);
+
+  // Global API Error Middleware
+  app.use(errorHandlerMiddleware);
 
   // Initialize Socket.io Server Foundation
   initSocketServer(io);
