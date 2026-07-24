@@ -13,6 +13,12 @@ export const apiClient: AxiosInstance = axios.create({
 // Request Interceptor (Logging / Request preparation)
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    const token = typeof window !== 'undefined'
+      ? (sessionStorage.getItem('liveconnect_session_token') || localStorage.getItem('liveconnect_session_token'))
+      : null;
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     Logger.debug('API-Client', `Request: ${config.method?.toUpperCase()} ${config.url}`);
     return config;
   },
