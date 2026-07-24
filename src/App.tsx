@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Loader2, Radio } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LoginForm } from './components/auth/LoginForm';
-import { Home } from './components/Home';
+import { LobbyPage } from './components/lobby/LobbyPage';
 
 function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -62,7 +62,7 @@ function AppContent() {
     );
   }
 
-  return <Home />;
+  return <LobbyPage />;
 }
 
 export default function App() {

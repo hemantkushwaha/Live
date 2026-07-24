@@ -39,7 +39,11 @@ apiClient.interceptors.response.use(
     const data = error.response?.data as { message?: string; errorCode?: string } | undefined;
     const errorMessage = data?.message || error.message || 'Network request failed';
 
-    Logger.error('API-Client', `HTTP ${status || 'ERR'} on ${error.config?.url}: ${errorMessage}`, data);
+    if (status && status < 500) {
+      Logger.warn('API-Client', `HTTP ${status} on ${error.config?.url}: ${errorMessage}`);
+    } else {
+      Logger.error('API-Client', `HTTP ${status || 'ERR'} on ${error.config?.url}: ${errorMessage}`, data);
+    }
     return Promise.reject(error);
   }
 );

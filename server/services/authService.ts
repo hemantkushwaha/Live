@@ -1,6 +1,8 @@
 import { ValidationError, AuthenticationError } from '../../shared/errors/errors';
 import { User } from '../../shared/types';
 import { sessionStore, SessionData } from '../store/sessionStore';
+import { presenceService } from './presenceService';
+import { broadcastPresenceUpdate } from '../socket/socketHandler';
 
 export class AuthService {
   /**
@@ -55,10 +57,15 @@ export class AuthService {
   }
 
   /**
-   * Invalidates a session by token
+   * Invalidates a session by token and removes user presence
    */
   public static logout(token: string): void {
     if (token) {
+      const session = sessionStore.getSession(token);
+      if (session && session.user) {
+        presenceService.removePresenceByUserId(session.user.id);
+        broadcastPresenceUpdate();
+      }
       sessionStore.deleteSession(token);
     }
   }

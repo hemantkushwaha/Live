@@ -10,6 +10,12 @@ export function errorHandlerMiddleware(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   next: NextFunction
 ): void {
+  if (err instanceof AppError && err.statusCode < 500) {
+    Logger.info('API', `Client Request [${req.method} ${req.originalUrl || req.url}] (${err.statusCode}): ${err.message}`);
+    res.status(err.statusCode).json(createErrorResponse(err.errorCode, err.message, err.details));
+    return;
+  }
+
   Logger.error('API', `Request Error [${req.method} ${req.originalUrl || req.url}]: ${err.message}`, err);
 
   if (err instanceof AppError) {
