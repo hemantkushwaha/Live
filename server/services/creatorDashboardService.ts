@@ -52,12 +52,15 @@ export class CreatorDashboardService {
     const chartData = creatorAnalyticsService.getEarningsChartData(creatorId, timeframe);
     const topSupporters = creatorAnalyticsService.getTopSupporters(creatorId, timeframe);
 
+    const recentTransactions = walletService.getHistory(creatorId).slice(0, 15);
+
     Logger.info('CreatorDashboardService', `Built analytics data for creator ${creatorId} (${timeframe})`);
 
     return {
       timeframe,
       revenue,
       summary,
+      recentTransactions,
       chartData,
       topSupporters,
     };

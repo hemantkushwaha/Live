@@ -101,6 +101,11 @@ export function initSocketServer(io: SocketIOServer) {
 
         // Notify all other clients that a new user joined
         socket.broadcast.emit(SOCKET_EVENTS.PRESENCE_USER_JOINED, presenceUser);
+        socket.broadcast.emit(SOCKET_EVENTS.CREATOR_ONLINE, {
+          creatorId: user.id,
+          username: user.username,
+          timestamp: Date.now(),
+        });
 
         // Broadcast updated online users list and lobby update to all clients
         broadcastPresenceUpdate();
@@ -232,6 +237,10 @@ export function initSocketServer(io: SocketIOServer) {
         io.emit(SOCKET_EVENTS.PRESENCE_USER_LEFT, {
           userId: removedUser.userId,
           email: removedUser.email,
+        });
+        io.emit(SOCKET_EVENTS.CREATOR_OFFLINE, {
+          creatorId: removedUser.userId,
+          timestamp: Date.now(),
         });
 
         // Broadcast updated online users & lobby update

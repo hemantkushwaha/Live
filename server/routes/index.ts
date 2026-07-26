@@ -10,10 +10,13 @@ import walletRoutes from './walletRoutes';
 import giftRoutes from './giftRoutes';
 import tipRoutes from './tipRoutes';
 import creatorDashboardRoutes from './creatorDashboardRoutes';
+import creatorRoutes from './creatorRoutes';
+import followRoutes from './followRoutes';
+import discoveryRoutes from './discoveryRoutes';
 
 const apiRouter = Router();
 
-// Mount auth, lobby, streams, signaling, private requests, economy, wallet, gifts, tips, creator dashboard and health routes
+// Mount auth, lobby, streams, signaling, private requests, economy, wallet, gifts, tips, creator dashboard, follow, discovery and health routes
 apiRouter.use('/auth', authRoutes);
 apiRouter.use('/v1/auth', authRoutes);
 apiRouter.use('/lobby', lobbyRoutes);
@@ -28,6 +31,12 @@ apiRouter.use('/economy', creatorEconomyRoutes);
 apiRouter.use('/v1/economy', creatorEconomyRoutes);
 apiRouter.use('/creator', creatorDashboardRoutes);
 apiRouter.use('/v1/creator', creatorDashboardRoutes);
+apiRouter.use('/creators', creatorRoutes);
+apiRouter.use('/v1/creators', creatorRoutes);
+apiRouter.use('/follow', followRoutes);
+apiRouter.use('/v1/follow', followRoutes);
+apiRouter.use('/discovery', discoveryRoutes);
+apiRouter.use('/v1/discovery', discoveryRoutes);
 apiRouter.use('/wallet', walletRoutes);
 apiRouter.use('/v1/wallet', walletRoutes);
 apiRouter.use('/gifts', giftRoutes);

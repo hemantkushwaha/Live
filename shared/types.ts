@@ -237,14 +237,58 @@ export interface CreatorDashboardData {
   summary: AnalyticsSummary;
   recentTransactions: WalletTransaction[];
   topSupporters: TopSupporter[];
+  chartData?: EarningsChartPoint[];
   timeframe: AnalyticsTimeframe;
 }
 
-export interface CreatorAnalyticsData {
-  timeframe: AnalyticsTimeframe;
-  revenue: RevenueCardsData;
-  summary: AnalyticsSummary;
-  chartData: EarningsChartPoint[];
-  topSupporters: TopSupporter[];
+export type CreatorAnalyticsData = CreatorDashboardData;
+
+export interface CreatorProfile {
+  id: string; // Creator User ID
+  displayName: string;
+  username: string;
+  avatar: string;
+  coverImage: string;
+  bio: string;
+  country: string;
+  languages: string[];
+  categories: string[];
+  isOnline: boolean;
+  isVerified: boolean;
+  isLive?: boolean;
+  liveStreamId?: string;
+  createdAt: number;
+}
+
+export interface CreatorProfileStats {
+  followersCount: number;
+  followingCount: number;
+  totalStreams: number;
+  totalViewers: number;
+  totalLikes: number;
+  totalGifts: number;
+  totalTips: number;
+  totalEarnings: number;
+}
+
+export interface CreatorProfileFull extends CreatorProfile {
+  stats: CreatorProfileStats;
+  isFollowing?: boolean;
+}
+
+export interface FollowRecord {
+  id: string;
+  followerId: string;
+  creatorId: string;
+  createdAt: number;
+}
+
+export interface CreatorDiscoveryPayload {
+  trending: CreatorProfileFull[];
+  online: CreatorProfileFull[];
+  recentlyLive: CreatorProfileFull[];
+  newest: CreatorProfileFull[];
+  categories: string[];
+  totalCreators: number;
 }
 

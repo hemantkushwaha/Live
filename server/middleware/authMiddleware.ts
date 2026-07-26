@@ -31,3 +31,29 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
     next(error);
   }
 }
+
+export function optionalAuthMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction): void {
+  try {
+    const authHeader = req.headers.authorization;
+    let token: string | undefined;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    } else if (req.headers['x-session-token']) {
+      token = req.headers['x-session-token'] as string;
+    }
+
+    if (token) {
+      try {
+        const session = AuthService.getSession(token);
+        req.user = session.user;
+        req.token = session.token;
+      } catch (err) {
+        // Ignore invalid token for optional auth
+      }
+    }
+    next();
+  } catch (error) {
+    next();
+  }
+}

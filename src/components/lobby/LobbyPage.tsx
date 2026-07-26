@@ -19,6 +19,7 @@ import { CurrentStreamPanel } from '../stream/CurrentStreamPanel';
 import { ViewerPage } from '../viewer/ViewerPage';
 import { WalletPage } from '../wallet/WalletPage';
 import { CreatorEarningsDashboard } from '../analytics/CreatorEarningsDashboard';
+import { DiscoveryPage } from '../discovery/DiscoveryPage';
 
 interface LobbyDataResponse {
 
@@ -37,6 +38,7 @@ export const LobbyPageContent: React.FC = () => {
   const [viewingStream, setViewingStream] = useState<StreamRoom | null>(null);
   const [isWalletOpen, setIsWalletOpen] = useState<boolean>(false);
   const [isEarningsOpen, setIsEarningsOpen] = useState<boolean>(false);
+  const [isDiscoveryOpen, setIsDiscoveryOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
 
@@ -168,6 +170,35 @@ export const LobbyPageContent: React.FC = () => {
     return <WalletPage onBack={() => setIsWalletOpen(false)} />;
   }
 
+  if (isDiscoveryOpen) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+        <LobbyHeader
+          currentUser={user}
+          onLogout={handleLogout}
+          onOpenWallet={() => {
+            setIsDiscoveryOpen(false);
+            setIsWalletOpen(true);
+          }}
+          onOpenEarnings={() => {
+            setIsDiscoveryOpen(false);
+            setIsEarningsOpen(true);
+          }}
+          onOpenDiscovery={() => setIsDiscoveryOpen(true)}
+        />
+        <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+          <DiscoveryPage
+            onBack={() => setIsDiscoveryOpen(false)}
+            onWatchStream={(stream) => {
+              setIsDiscoveryOpen(false);
+              setViewingStream(stream);
+            }}
+          />
+        </main>
+      </div>
+    );
+  }
+
   if (isEarningsOpen) {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
@@ -179,6 +210,10 @@ export const LobbyPageContent: React.FC = () => {
             setIsWalletOpen(true);
           }}
           onOpenEarnings={() => setIsEarningsOpen(true)}
+          onOpenDiscovery={() => {
+            setIsEarningsOpen(false);
+            setIsDiscoveryOpen(true);
+          }}
         />
         <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
           <CreatorEarningsDashboard onBack={() => setIsEarningsOpen(false)} />
@@ -206,6 +241,7 @@ export const LobbyPageContent: React.FC = () => {
           onLogout={handleLogout}
           onOpenWallet={() => setIsWalletOpen(true)}
           onOpenEarnings={() => setIsEarningsOpen(true)}
+          onOpenDiscovery={() => setIsDiscoveryOpen(true)}
         />
         <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
           <CurrentStreamPanel
@@ -232,6 +268,7 @@ export const LobbyPageContent: React.FC = () => {
         onLogout={handleLogout}
         onOpenWallet={() => setIsWalletOpen(true)}
         onOpenEarnings={() => setIsEarningsOpen(true)}
+        onOpenDiscovery={() => setIsDiscoveryOpen(true)}
       />
 
 

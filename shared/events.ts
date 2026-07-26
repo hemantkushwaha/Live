@@ -96,6 +96,12 @@ export const SOCKET_EVENTS = {
   WALLET_UPDATED: 'economy:wallet_updated',
   CREATOR_SETTINGS_UPDATED: 'economy:creator_settings_updated',
 
+  // Creator Follow & Discovery Events (EWO-019)
+  CREATOR_ONLINE: 'creator:online',
+  CREATOR_OFFLINE: 'creator:offline',
+  CREATOR_FOLLOWED: 'creator:followed',
+  CREATOR_UNFOLLOWED: 'creator:unfollowed',
+
   // Error Handling
   ERROR: 'system:error'
 } as const;

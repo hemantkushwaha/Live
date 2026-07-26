@@ -1,5 +1,5 @@
 import React from 'react';
-import { Radio, LogOut, User as UserIcon, ShieldCheck, Wallet, TrendingUp } from 'lucide-react';
+import { Radio, LogOut, User as UserIcon, ShieldCheck, Wallet, TrendingUp, Compass } from 'lucide-react';
 import { APP_NAME, APP_VERSION } from '../../../shared/constants/constants';
 import { User } from '../../../shared/types';
 
@@ -8,6 +8,7 @@ interface LobbyHeaderProps {
   onLogout: () => void;
   onOpenWallet?: () => void;
   onOpenEarnings?: () => void;
+  onOpenDiscovery?: () => void;
 }
 
 export const LobbyHeader: React.FC<LobbyHeaderProps> = ({
@@ -15,6 +16,7 @@ export const LobbyHeader: React.FC<LobbyHeaderProps> = ({
   onLogout,
   onOpenWallet,
   onOpenEarnings,
+  onOpenDiscovery,
 }) => {
   return (
     <header className="bg-slate-900/90 border-b border-slate-800 sticky top-0 z-50 backdrop-blur-md">
@@ -37,6 +39,18 @@ export const LobbyHeader: React.FC<LobbyHeaderProps> = ({
 
         {/* Current User Info & Action Buttons */}
         <div className="flex items-center gap-3">
+          {onOpenDiscovery && (
+            <button
+              onClick={onOpenDiscovery}
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 active:bg-indigo-500/30 text-indigo-300 border border-indigo-500/30 text-xs font-bold transition-all shadow-sm cursor-pointer"
+              title="Creator Discovery"
+              id="header-discovery-btn"
+            >
+              <Compass className="w-4 h-4 text-indigo-400" />
+              <span className="hidden sm:inline">Discovery</span>
+            </button>
+          )}
+
           {onOpenEarnings && (
             <button
               onClick={onOpenEarnings}
