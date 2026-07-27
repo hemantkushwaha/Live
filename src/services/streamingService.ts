@@ -1,4 +1,5 @@
 import { SignalingEngine } from '../webrtc/SignalingEngine';
+import { LiveKitSFUEngine } from '../webrtc/LiveKitSFUEngine';
 import { PeerConnectionState } from '../webrtc/peer/PeerConnectionManager';
 
 export type RemoteStreamListener = (peerId: string, stream: MediaStream | null) => void;
@@ -7,13 +8,14 @@ export type StreamEndedListener = (streamId: string) => void;
 
 /**
  * Reusable StreamingService abstraction layer.
- * Isolates transport layer (WebRTC P2P or future SFU) from React UI components.
+ * Isolates transport layer (WebRTC P2P or LiveKit SFU) from React UI components.
  * React components deal exclusively with StreamingService and Contexts.
  */
 export class StreamingService {
   private static instance: StreamingService;
 
   private signalingEngine: SignalingEngine | null = null;
+  private sfuEngine: LiveKitSFUEngine | null = null;
   private remoteStreams: Map<string, MediaStream> = new Map();
   private remoteStreamListeners: Set<RemoteStreamListener> = new Set();
   private connectionStateListeners: Set<ConnectionStateListener> = new Set();
@@ -34,12 +36,32 @@ export class StreamingService {
   }
 
   /**
+   * Bind LiveKitSFUEngine instance to StreamingService
+   */
+  public bindLiveKitEngine(sfuEngine: LiveKitSFUEngine): void {
+    this.sfuEngine = sfuEngine;
+  }
+
+  /**
    * Set host local media stream
    */
   public setLocalStream(stream: MediaStream | null): void {
     if (this.signalingEngine) {
       this.signalingEngine.setLocalMediaStream(stream);
     }
+    if (this.sfuEngine) {
+      this.sfuEngine.setLocalMediaStream(stream);
+    }
+  }
+
+  /**
+   * Start LiveKit SFU stream as Publisher
+   */
+  public async startSFUHosting(streamId: string): Promise<boolean> {
+    if (this.sfuEngine) {
+      return await this.sfuEngine.connectToRoom(streamId, true);
+    }
+    return false;
   }
 
   /**
@@ -73,19 +95,24 @@ export class StreamingService {
   }
 
   /**
-   * Join stream viewing mode
+   * Join stream viewing mode (LiveKit SFU preferred)
    */
-  public joinStream(streamId: string): void {
-    if (!this.signalingEngine) {
-      throw new Error('StreamingService is not initialized with a signaling engine');
+  public async joinStream(streamId: string): Promise<void> {
+    if (this.sfuEngine) {
+      await this.sfuEngine.connectToRoom(streamId, false);
     }
-    this.signalingEngine.joinStream(streamId);
+    if (this.signalingEngine) {
+      this.signalingEngine.joinStream(streamId);
+    }
   }
 
   /**
    * Leave current stream
    */
-  public leaveStream(): void {
+  public async leaveStream(): Promise<void> {
+    if (this.sfuEngine) {
+      await this.sfuEngine.leaveRoom();
+    }
     if (this.signalingEngine) {
       this.signalingEngine.leaveStream();
     }

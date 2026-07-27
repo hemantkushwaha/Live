@@ -3,7 +3,7 @@
  */
 
 export const APP_NAME = 'LiveConnect';
-export const APP_VERSION = '0.0.2';
+export const APP_VERSION = '1.0.0';
 export const API_VERSION = 'v1';
 export const SOCKET_EVENT_PREFIX = 'lc:';
 export const ROUTE_PREFIX = '/api/v1';

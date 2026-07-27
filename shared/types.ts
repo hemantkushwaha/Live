@@ -9,6 +9,7 @@ export interface User {
   email: string;
   username: string;
   status: UserStatus;
+  role?: string;
   socketId?: string;
   connectedAt: number;
 }
@@ -291,4 +292,226 @@ export interface CreatorDiscoveryPayload {
   categories: string[];
   totalCreators: number;
 }
+
+export interface MediaMetadata {
+  id: string;
+  ownerId: string;
+  provider: 'cloudinary' | 's3' | 'local';
+  url: string;
+  secureUrl: string;
+  width?: number;
+  height?: number;
+  fileSize: number;
+  mimeType: string;
+  createdAt: number;
+}
+
+// ==========================================
+// EWO-024: Payment & Coin Purchase Data Models
+// ==========================================
+
+export interface CoinPackage {
+  id: string;
+  name: string;
+  coins: number;
+  bonusCoins?: number;
+  price: number; // In minor units (e.g. cents/paise) or standard float
+  currency: string; // 'INR', 'USD', etc.
+  badge?: string; // e.g. 'Popular', 'Best Value'
+  active: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export type PaymentOrderStatus =
+  | 'created'
+  | 'pending'
+  | 'processing'
+  | 'completed'
+  | 'failed'
+  | 'cancelled'
+  | 'refunded';
+
+export interface PaymentOrder {
+  id: string;
+  userId: string;
+  packageId: string;
+  coins: number;
+  amount: number;
+  currency: string;
+  provider: string; // 'razorpay', 'stripe', 'paypal', 'google_play', 'apple_pay'
+  status: PaymentOrderStatus;
+  gatewayOrderId?: string;
+  idempotencyKey?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface Payment {
+  id: string;
+  orderId: string;
+  userId: string;
+  gatewayPaymentId: string;
+  gatewayOrderId?: string;
+  gatewaySignature?: string;
+  provider: string;
+  amount: number;
+  currency: string;
+  coinsCredited: number;
+  status: 'captured' | 'failed' | 'refunded';
+  receiptNumber: string;
+  createdAt: number;
+}
+
+export interface PaymentEvent {
+  id: string;
+  orderId?: string;
+  paymentId?: string;
+  userId?: string;
+  provider: string;
+  eventType: string; // 'order.created', 'payment.authorized', 'payment.captured', 'payment.failed', 'refund.processed'
+  payload: Record<string, any>;
+  timestamp: number;
+}
+
+export interface Refund {
+  id: string;
+  paymentId: string;
+  orderId: string;
+  userId: string;
+  amount: number;
+  reason: string;
+  gatewayRefundId?: string;
+  status: 'pending' | 'completed' | 'failed';
+  createdAt: number;
+}
+
+export interface PaymentReceipt {
+  paymentId: string;
+  gatewayOrderId: string;
+  gatewayTransactionId: string;
+  amount: number;
+  currency: string;
+  coinsPurchased: number;
+  timestamp: number;
+  status: string;
+  userWalletBalanceAfter?: number;
+}
+
+// ==========================================
+// EWO-025: Creator Withdrawals & Financial Ledger Data Models
+// ==========================================
+
+export interface CreatorEarnings {
+  creatorId: string;
+  totalEarned: number; // Cumulative coins earned
+  withdrawableBalance: number; // Current withdrawable coins balance
+  totalWithdrawn: number; // Total coins withdrawn
+  pendingWithdrawal: number; // Coins locked in pending withdrawal requests
+  currency: string; // 'COIN'
+  lastUpdated: number;
+}
+
+export type LedgerTransactionType =
+  | 'coin_purchase'
+  | 'gift_sent'
+  | 'gift_received'
+  | 'tip_sent'
+  | 'tip_received'
+  | 'private_call_payment'
+  | 'platform_commission'
+  | 'creator_earnings'
+  | 'withdrawal_request'
+  | 'withdrawal_approved'
+  | 'withdrawal_rejected';
+
+export interface FinancialLedgerEntry {
+  id: string;
+  transactionType: LedgerTransactionType;
+  userId: string; // Actor / Creator / Viewer
+  creatorId?: string;
+  sourceId?: string; // giftId, tipId, callSessionId, withdrawalRequestId, orderId
+  amount: number;
+  currency: string; // 'COIN', 'INR', 'USD'
+  direction: 'credit' | 'debit';
+  balanceAfter?: number;
+  description: string;
+  metadata?: Record<string, any>;
+  createdAt: number; // Immutable timestamp
+}
+
+export type WithdrawalStatus =
+  | 'pending'
+  | 'approved'
+  | 'rejected'
+  | 'processing'
+  | 'completed'
+  | 'failed';
+
+export interface WithdrawalRequest {
+  id: string;
+  creatorId: string;
+  creatorName?: string;
+  amount: number; // In Coins
+  currency: string; // 'COIN'
+  conversionRate: number; // e.g. 0.8 INR per Coin
+  payoutAmount: number; // In fiat (e.g., INR)
+  paymentMethod: 'bank_transfer' | 'upi' | 'paypal';
+  payoutDetails: {
+    bankAccount?: string;
+    ifsc?: string;
+    accountHolder?: string;
+    upiId?: string;
+    paypalEmail?: string;
+  };
+  status: WithdrawalStatus;
+  adminRemarks?: string;
+  processedBy?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface WithdrawalTransaction {
+  id: string;
+  requestId: string;
+  creatorId: string;
+  amount: number;
+  currency: string;
+  payoutAmount: number;
+  status: WithdrawalStatus;
+  transactionRef: string;
+  processedAt: number;
+}
+
+export interface RevenueShareRule {
+  id: string;
+  category: 'gift' | 'tip' | 'private_call' | 'default';
+  creatorPercentage: number; // e.g., 80
+  platformPercentage: number; // e.g., 20
+  description?: string;
+  updatedAt: number;
+}
+
+export interface SettlementHistory {
+  id: string;
+  creatorId: string;
+  withdrawalRequestId: string;
+  amount: number;
+  currency: string;
+  payoutAmount: number;
+  settledAt: number;
+  adminUserId: string;
+  remarks?: string;
+}
+
+export interface CreatorFinancialSummary {
+  earnings: CreatorEarnings;
+  revenueShareRules: RevenueShareRule[];
+  recentLedgerEntries: FinancialLedgerEntry[];
+  withdrawalHistory: WithdrawalRequest[];
+  minWithdrawalAmount: number; // e.g., 500 Coins
+  coinToFiatRate: number; // e.g., 0.8
+}
+
+
 

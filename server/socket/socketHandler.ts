@@ -57,6 +57,37 @@ export function initSocketServer(io: SocketIOServer) {
   globalIo = io;
   billingService.setSocketServer(io);
 
+  // EWO-027 Socket Authentication Middleware
+  io.use((socket: Socket, next) => {
+    try {
+      const token =
+        socket.handshake.auth?.token ||
+        (socket.handshake.headers?.authorization?.startsWith('Bearer ')
+          ? socket.handshake.headers.authorization.split(' ')[1]
+          : undefined);
+
+      if (!token) {
+        Logger.warn('SocketAuth', `Socket connection rejected for ${socket.id}: No authentication token provided.`);
+        return next(new Error('Authentication required: Token missing'));
+      }
+
+      // Verify token via AuthService / SecurityService
+      const session = sessionStore.getSession(token);
+      if (!session || !session.user) {
+        Logger.warn('SocketAuth', `Socket connection rejected for ${socket.id}: Invalid or expired token.`);
+        return next(new Error('Authentication failed: Invalid or expired token'));
+      }
+
+      // Attach authenticated user to socket data
+      (socket as any).user = session.user;
+      (socket as any).token = token;
+      next();
+    } catch (err: any) {
+      Logger.error('SocketAuth', `Socket authentication error for ${socket.id}`, err);
+      return next(new Error('Authentication failed: Invalid token'));
+    }
+  });
+
   io.on('connection', (socket: Socket) => {
     Logger.info('Socket', `Client connected: ID ${socket.id}`);
 

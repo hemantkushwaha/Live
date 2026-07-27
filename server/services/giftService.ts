@@ -1,5 +1,6 @@
 import { GiftItem, TipGiftRecord, UserWallet } from '../../shared/types';
 import { walletService } from './walletService';
+import { revenueService } from './revenueService';
 import { Logger } from '../utils/logger';
 
 export const DEFAULT_GIFTS: GiftItem[] = [
@@ -133,6 +134,16 @@ export class GiftService {
     }
     list.push(record);
 
+    // Process Creator Earnings & Financial Ledger
+    revenueService.processEarning({
+      category: 'gift',
+      senderId: sender.id,
+      creatorId: receiverId,
+      totalCoins: gift.price,
+      sourceId: record.id,
+      description: `Gift ${gift.name} (${gift.icon}) sent in stream`,
+    });
+
     Logger.info(
       'GiftService',
       `Gift ${gift.name} (${gift.price} Coins) sent by ${sender.email} to creator ${receiverId}`
@@ -189,6 +200,16 @@ export class GiftService {
       this.streamGiftsMap.set(streamId, list);
     }
     list.push(record);
+
+    // Process Creator Earnings & Financial Ledger
+    revenueService.processEarning({
+      category: 'tip',
+      senderId: sender.id,
+      creatorId: receiverId,
+      totalCoins: amount,
+      sourceId: record.id,
+      description: `Tip of ${amount} Coins sent in stream`,
+    });
 
     Logger.info(
       'GiftService',

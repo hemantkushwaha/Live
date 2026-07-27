@@ -1,4 +1,6 @@
 import { StreamRoom, User } from '../../shared/types';
+import { redisService } from './redisService';
+import { cacheService } from './cacheService';
 
 export interface ViewerSessionRecord {
   viewerId: string;
@@ -12,11 +14,27 @@ export class StreamService {
   private activeStreams: Map<string, StreamRoom> = new Map();
   private viewerLogs: Map<string, ViewerSessionRecord[]> = new Map();
 
+  private static REDIS_STREAMS_KEY = 'runtime:streams';
+
   public static getInstance(): StreamService {
     if (!StreamService.instance) {
       StreamService.instance = new StreamService();
+      StreamService.instance.loadFromRedis();
     }
     return StreamService.instance;
+  }
+
+  private async loadFromRedis(): Promise<void> {
+    try {
+      const streams = await redisService.hgetall<StreamRoom>(StreamService.REDIS_STREAMS_KEY);
+      for (const [userId, stream] of Object.entries(streams)) {
+        if (stream && stream.id) {
+          this.activeStreams.set(userId, stream);
+        }
+      }
+    } catch (err) {
+      // Graceful fallback
+    }
   }
 
   /**
@@ -70,6 +88,11 @@ export class StreamService {
 
     this.activeStreams.set(user.id, streamRoom);
     this.viewerLogs.set(streamRoom.id, []);
+
+    // Persist active stream in Redis & invalidate discovery cache
+    redisService.hset(StreamService.REDIS_STREAMS_KEY, user.id, streamRoom).catch(() => {});
+    cacheService.onStreamStart(user.id).catch(() => {});
+
     return streamRoom;
   }
 
@@ -149,6 +172,10 @@ export class StreamService {
 
     this.activeStreams.delete(hostUserId);
     this.viewerLogs.delete(stream.id);
+
+    redisService.hdel(StreamService.REDIS_STREAMS_KEY, hostUserId).catch(() => {});
+    cacheService.onStreamEnd(hostUserId).catch(() => {});
+
     return stream;
   }
 
@@ -160,6 +187,10 @@ export class StreamService {
     if (stream) {
       this.activeStreams.delete(userId);
       this.viewerLogs.delete(stream.id);
+
+      redisService.hdel(StreamService.REDIS_STREAMS_KEY, userId).catch(() => {});
+      cacheService.onStreamEnd(userId).catch(() => {});
+
       return stream;
     }
     return null;

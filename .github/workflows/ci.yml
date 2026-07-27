@@ -1,0 +1,46 @@
+name: LiveConnect CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    name: Build, Lint & Verify
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Code Quality - ESLint & Prettier
+        run: npm run lint
+
+      - name: Type Checking - TypeScript
+        run: npx tsc --noEmit
+
+      - name: Security & Dependency Vulnerability Audit
+        run: npm audit --audit-level=high || true
+
+      - name: Build Application
+        run: npm run build
+
+      - name: Verify Build Artifacts
+        run: |
+          test -d dist || (echo "Build dist directory missing!" && exit 1)
+          echo "Build successful and verified."

@@ -1,5 +1,6 @@
 import { UserWallet, WalletTransaction, TransactionType } from '../../shared/types';
 import { Logger } from '../utils/logger';
+import { cacheService } from './cacheService';
 
 export class WalletService {
   private static instance: WalletService;
@@ -86,6 +87,7 @@ export class WalletService {
     wallet.balance = balanceAfter;
     wallet.updatedAt = now;
     this.userWallets.set(userId, wallet);
+    cacheService.onWalletChange(userId).catch(() => {});
 
     const transaction: WalletTransaction = {
       id: `tx_recharge_${now}_${Math.random().toString(36).substring(2, 7)}`,
@@ -140,6 +142,7 @@ export class WalletService {
     wallet.balance = balanceAfter;
     wallet.updatedAt = now;
     this.userWallets.set(userId, wallet);
+    cacheService.onWalletChange(userId).catch(() => {});
 
     const transaction: WalletTransaction = {
       id: `tx_${type.toLowerCase()}_${now}_${Math.random().toString(36).substring(2, 7)}`,

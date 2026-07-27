@@ -16,13 +16,16 @@ import { ActiveStreamsPanel } from './ActiveStreamsPanel';
 import { OnlineUsersPanel } from './OnlineUsersPanel';
 import { LocalPreview } from '../media/LocalPreview';
 import { CurrentStreamPanel } from '../stream/CurrentStreamPanel';
+import { CreatorDashboard } from '../creator/CreatorDashboard';
 import { ViewerPage } from '../viewer/ViewerPage';
 import { WalletPage } from '../wallet/WalletPage';
-import { CreatorEarningsDashboard } from '../analytics/CreatorEarningsDashboard';
+import { CreatorEarningsDashboard } from '../earnings/CreatorEarningsDashboard';
 import { DiscoveryPage } from '../discovery/DiscoveryPage';
+import { ProfilePage } from '../creator/ProfilePage';
+import { SettingsPage } from '../settings/SettingsPage';
+import { NotFoundPage } from '../common/NotFoundPage';
 
 interface LobbyDataResponse {
-
   currentUser?: any;
   onlineUsers: PresenceUser[];
   activeStreams: StreamRoom[];
@@ -36,11 +39,31 @@ export const LobbyPageContent: React.FC = () => {
   const [onlineUsers, setOnlineUsers] = useState<PresenceUser[]>([]);
   const [activeStreams, setActiveStreams] = useState<StreamRoom[]>([]);
   const [viewingStream, setViewingStream] = useState<StreamRoom | null>(null);
-  const [isWalletOpen, setIsWalletOpen] = useState<boolean>(false);
-  const [isEarningsOpen, setIsEarningsOpen] = useState<boolean>(false);
-  const [isDiscoveryOpen, setIsDiscoveryOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  // Router Path State
+  const [currentPath, setCurrentPath] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return window.location.pathname || '/';
+    }
+    return '/';
+  });
+
+  const navigate = (path: string) => {
+    if (typeof window !== 'undefined') {
+      window.history.pushState(null, '', path);
+    }
+    setCurrentPath(path);
+  };
+
+  // Synchronize browser popstate events
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentPath(window.location.pathname || '/');
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   // Sync activeStreams from StreamContext whenever it updates
   useEffect(() => {
@@ -164,122 +187,136 @@ export const LobbyPageContent: React.FC = () => {
   const handleLeaveViewer = () => {
     streamingService.leaveStream();
     setViewingStream(null);
+    navigate('/');
   };
 
-  if (isWalletOpen) {
-    return <WalletPage onBack={() => setIsWalletOpen(false)} />;
-  }
+  // Select Stream Handler
+  const handleSelectStream = (stream: StreamRoom) => {
+    setViewingStream(stream);
+    navigate('/viewer');
+  };
 
-  if (isDiscoveryOpen) {
-    return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-        <LobbyHeader
-          currentUser={user}
-          onLogout={handleLogout}
-          onOpenWallet={() => {
-            setIsDiscoveryOpen(false);
-            setIsWalletOpen(true);
-          }}
-          onOpenEarnings={() => {
-            setIsDiscoveryOpen(false);
-            setIsEarningsOpen(true);
-          }}
-          onOpenDiscovery={() => setIsDiscoveryOpen(true)}
-        />
-        <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
-          <DiscoveryPage
-            onBack={() => setIsDiscoveryOpen(false)}
-            onWatchStream={(stream) => {
-              setIsDiscoveryOpen(false);
-              setViewingStream(stream);
-            }}
+  // Helper to render Page Body based on route currentPath
+  const renderPageContent = () => {
+    // 1. Viewer View
+    if (viewingStream || currentPath === '/viewer') {
+      if (viewingStream) {
+        return (
+          <ViewerPage
+            stream={viewingStream}
+            onLeave={handleLeaveViewer}
+            onOpenWallet={() => navigate('/wallet')}
           />
-        </main>
-      </div>
-    );
-  }
+        );
+      } else {
+        // If on /viewer route but no active stream selected, show active stream selector or fallback
+        return (
+          <div className="space-y-6">
+            <h2 className="text-xl font-bold text-white">Select a Live Stream to Watch</h2>
+            <ActiveStreamsPanel
+              activeStreams={activeStreams}
+              onSelectStream={handleSelectStream}
+            />
+          </div>
+        );
+      }
+    }
 
-  if (isEarningsOpen) {
-    return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-        <LobbyHeader
-          currentUser={user}
-          onLogout={handleLogout}
-          onOpenWallet={() => {
-            setIsEarningsOpen(false);
-            setIsWalletOpen(true);
-          }}
-          onOpenEarnings={() => setIsEarningsOpen(true)}
-          onOpenDiscovery={() => {
-            setIsEarningsOpen(false);
-            setIsDiscoveryOpen(true);
-          }}
+    // 2. Wallet Route
+    if (currentPath === '/wallet') {
+      return <WalletPage onBack={() => navigate('/')} />;
+    }
+
+    // 3. Discovery Route
+    if (currentPath === '/discovery') {
+      return (
+        <DiscoveryPage
+          onBack={() => navigate('/')}
+          onWatchStream={(stream) => handleSelectStream(stream)}
         />
-        <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
-          <CreatorEarningsDashboard onBack={() => setIsEarningsOpen(false)} />
-        </main>
-      </div>
-    );
-  }
+      );
+    }
 
-  if (viewingStream) {
-    return (
-      <ViewerPage
-        stream={viewingStream}
-        onLeave={handleLeaveViewer}
-        onOpenWallet={() => setIsWalletOpen(true)}
-      />
-    );
-  }
+    // 4. Analytics & Creator Earnings Route
+    if (currentPath === '/analytics' || currentPath === '/earnings') {
+      return <CreatorEarningsDashboard creatorId={user?.id || 'usr_creator_1'} />;
+    }
 
-  if (isStreaming && currentStream) {
-    return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans" id="creator-dashboard-page">
-        <LocalPreview />
-        <LobbyHeader
-          currentUser={user}
-          onLogout={handleLogout}
-          onOpenWallet={() => setIsWalletOpen(true)}
-          onOpenEarnings={() => setIsEarningsOpen(true)}
-          onOpenDiscovery={() => setIsDiscoveryOpen(true)}
-        />
-        <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
-          <CurrentStreamPanel
+    // 5. Creator Profile Route
+    if (currentPath === '/profile') {
+      return <ProfilePage onBack={() => navigate('/')} onNavigate={navigate} />;
+    }
+
+    // 6. Settings Route
+    if (currentPath === '/settings') {
+      return <SettingsPage onBack={() => navigate('/')} />;
+    }
+
+    // 7. Creator Dashboard Route
+    if (currentPath === '/dashboard' || isStreaming) {
+      if (isStreaming && currentStream) {
+        return (
+          <CreatorDashboard
             currentStream={currentStream}
             onEndStream={endStream}
             isEndingStream={isEndingStream}
           />
-        </main>
-        <footer className="border-t border-slate-900 bg-slate-950 py-4 text-center text-xs text-slate-500">
-          LiveConnect Creator Dashboard &bull; EWO-011 Creator Live Control
-        </footer>
-      </div>
-    );
-  }
+        );
+      } else {
+        return (
+          <div className="space-y-6" id="creator-dashboard-view">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-4 text-white">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-bold text-white">Creator Live Control Center</h2>
+                  <p className="text-xs text-slate-400">Launch a live stream broadcast or manage creator settings & analytics</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => navigate('/analytics')}
+                    className="px-4 py-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-bold transition-all cursor-pointer"
+                  >
+                    View Analytics
+                  </button>
+                  <button
+                    onClick={() => navigate('/settings')}
+                    className="px-4 py-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-bold transition-all cursor-pointer"
+                  >
+                    Stream Settings
+                  </button>
+                </div>
+              </div>
+            </div>
 
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-      {/* Local Camera & Microphone Media Stream Preview Overlay */}
-      <LocalPreview />
+            {/* Render User Profile & Stream Overview */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              <div className="lg:col-span-4 space-y-6">
+                <CurrentUserCard
+                  user={user}
+                  onOpenWallet={() => navigate('/wallet')}
+                />
+              </div>
+              <div className="lg:col-span-8 space-y-6">
+                <ActiveStreamsPanel
+                  activeStreams={activeStreams}
+                  onSelectStream={handleSelectStream}
+                />
+              </div>
+            </div>
+          </div>
+        );
+      }
+    }
 
-      {/* Top Navigation Bar */}
-      <LobbyHeader
-        currentUser={user}
-        onLogout={handleLogout}
-        onOpenWallet={() => setIsWalletOpen(true)}
-        onOpenEarnings={() => setIsEarningsOpen(true)}
-        onOpenDiscovery={() => setIsDiscoveryOpen(true)}
-      />
-
-
-      {/* Main Responsive Grid Layout */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+    // 8. Home / Lobby Route
+    if (currentPath === '/' || currentPath === '/home') {
+      return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 items-start">
           {/* Left Panel: Current User Card */}
           <div className="lg:col-span-3 space-y-6">
             <CurrentUserCard
               user={user}
-              onOpenWallet={() => setIsWalletOpen(true)}
+              onOpenWallet={() => navigate('/wallet')}
             />
           </div>
 
@@ -287,7 +324,7 @@ export const LobbyPageContent: React.FC = () => {
           <div className="md:col-span-2 lg:col-span-6 space-y-6">
             <ActiveStreamsPanel
               activeStreams={activeStreams}
-              onSelectStream={(stream) => setViewingStream(stream)}
+              onSelectStream={handleSelectStream}
             />
           </div>
 
@@ -296,11 +333,34 @@ export const LobbyPageContent: React.FC = () => {
             <OnlineUsersPanel onlineUsers={onlineUsers} currentUser={user} />
           </div>
         </div>
+      );
+    }
+
+    // 9. Unrecognized route -> 404
+    return <NotFoundPage onNavigateHome={() => navigate('/')} />;
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+      {/* Local Camera & Microphone Media Stream Preview Overlay */}
+      <LocalPreview />
+
+      {/* Top Navigation Bar with 7 standard links */}
+      <LobbyHeader
+        currentUser={user}
+        currentPath={currentPath}
+        onNavigate={navigate}
+        onLogout={handleLogout}
+      />
+
+      {/* Main Responsive Layout Body */}
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+        {renderPageContent()}
       </main>
 
       {/* Footer */}
       <footer className="border-t border-slate-900 bg-slate-950 py-4 text-center text-xs text-slate-500">
-        LiveConnect Live Lobby &bull; EWO-010 Public Stream Viewer MVP
+        LiveConnect Platform &bull; Integrated Real-Time Navigation & Routing
       </footer>
     </div>
   );

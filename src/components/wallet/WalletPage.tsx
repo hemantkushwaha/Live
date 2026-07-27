@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Coins, ArrowLeft, RefreshCw, Wallet as WalletIcon } from 'lucide-react';
+import { Coins, ArrowLeft, RefreshCw, ShoppingCart, PlusCircle } from 'lucide-react';
 import { apiClient } from '../../config/api';
-import { ApiResponse, UserWallet, WalletTransaction } from '../../../shared/types';
+import { ApiResponse, UserWallet, WalletTransaction, PaymentReceipt } from '../../../shared/types';
 import { BalanceCard } from './BalanceCard';
 import { WalletCard } from './WalletCard';
 import { RechargePanel } from './RechargePanel';
 import { TransactionTable } from './TransactionTable';
+import { BuyCoinsDialog } from './BuyCoinsDialog';
 
 interface WalletPageProps {
   onBack?: () => void;
@@ -17,6 +18,7 @@ export const WalletPage: React.FC<WalletPageProps> = ({ onBack, className = '' }
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [isBuyCoinsOpen, setIsBuyCoinsOpen] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchWalletData = async () => {
@@ -52,6 +54,11 @@ export const WalletPage: React.FC<WalletPageProps> = ({ onBack, className = '' }
     setTransactions((prev) => [newTx, ...prev]);
   };
 
+  const handlePaymentSuccess = (receipt: PaymentReceipt, updatedWallet: UserWallet) => {
+    setWallet(updatedWallet);
+    fetchWalletData();
+  };
+
   return (
     <div className={`min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans ${className}`} id="wallet-page-container">
       {/* Top Bar Navigation */}
@@ -75,14 +82,23 @@ export const WalletPage: React.FC<WalletPageProps> = ({ onBack, className = '' }
               <div className="flex items-center gap-2">
                 <span className="font-bold text-white text-lg tracking-tight">Virtual Wallet</span>
                 <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase tracking-widest">
-                  Demo Coins
+                  EWO-024 Payment System
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 hidden sm:block">EWO-012 Virtual Wallet & Coin System</p>
+              <p className="text-[11px] text-slate-400 hidden sm:block">Purchase Coins & Payment Gateway</p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsBuyCoinsOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-bold shadow-lg shadow-amber-500/20 transition-all cursor-pointer"
+              id="wallet-buy-coins-header-btn"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              <span>Buy Coins</span>
+            </button>
+
             <button
               onClick={fetchWalletData}
               disabled={isRefreshing}
@@ -90,7 +106,7 @@ export const WalletPage: React.FC<WalletPageProps> = ({ onBack, className = '' }
               id="wallet-refresh-btn"
             >
               <RefreshCw className={`w-4 h-4 text-slate-400 ${isRefreshing ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">Refresh Balance</span>
+              <span className="hidden sm:inline">Refresh</span>
             </button>
           </div>
         </div>
@@ -110,6 +126,35 @@ export const WalletPage: React.FC<WalletPageProps> = ({ onBack, className = '' }
           <WalletCard wallet={wallet} />
         </div>
 
+        {/* Payment Gateway Purchase Banner */}
+        <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-slate-900 border border-amber-500/30 rounded-3xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0">
+              <Coins className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                Payment Gateway Coin Purchase
+                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500 text-slate-950">
+                  Razorpay Primary
+                </span>
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Buy official coin packages (100 to 10,000 Coins) with verified payment signatures
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setIsBuyCoinsOpen(true)}
+            className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 cursor-pointer shrink-0 transition-all"
+            id="wallet-open-buy-dialog-btn"
+          >
+            <ShoppingCart className="w-4 h-4" />
+            <span>Select Coin Package</span>
+          </button>
+        </div>
+
         {/* Demo Recharge Options Panel */}
         <RechargePanel onRecharged={handleRecharged} />
 
@@ -121,10 +166,18 @@ export const WalletPage: React.FC<WalletPageProps> = ({ onBack, className = '' }
         />
       </main>
 
+      {/* Buy Coins Dialog Modal */}
+      <BuyCoinsDialog
+        isOpen={isBuyCoinsOpen}
+        onClose={() => setIsBuyCoinsOpen(false)}
+        onSuccess={handlePaymentSuccess}
+      />
+
       {/* Footer */}
       <footer className="border-t border-slate-900 bg-slate-950 py-4 text-center text-xs text-slate-500">
-        LiveConnect Virtual Wallet &bull; EWO-012 Demo Coin Engine
+        LiveConnect Payment Gateway &bull; EWO-024 Virtual Coin Purchasing
       </footer>
     </div>
   );
 };
+

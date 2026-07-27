@@ -6,6 +6,7 @@ import { walletService } from './walletService';
 import { privateRequestService } from './privateRequestService';
 import { privateCallSettingsService } from './privateCallSettingsService';
 import { presenceService } from './presenceService';
+import { revenueService } from './revenueService';
 import { SOCKET_EVENTS } from '../../shared/events';
 import { Logger } from '../utils/logger';
 
@@ -199,6 +200,16 @@ export class BillingService {
 
       session.coinsPaid = (session.coinsPaid || 0) + rate;
       session.creatorEarned = (session.creatorEarned || 0) + rate;
+
+      // Process Creator Earnings & Financial Ledger (85% Creator / 15% Platform)
+      revenueService.processEarning({
+        category: 'private_call',
+        senderId: session.viewerId,
+        creatorId: session.creatorId,
+        totalCoins: rate,
+        sourceId: session.id,
+        description: `Private call minute ${minuteNumber}`,
+      });
 
       // Broadcast private:billing event
       this.broadcastToParticipants(session, SOCKET_EVENTS.PRIVATE_BILLING, {

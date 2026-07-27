@@ -3,6 +3,7 @@ import { ValidationError, NotFoundError } from '../../shared/errors/errors';
 import { getIO } from '../socket/socketHandler';
 import { SOCKET_EVENTS } from '../../shared/events';
 import { Logger } from '../utils/logger';
+import { cacheService } from './cacheService';
 
 export class FollowService {
   private static instance: FollowService;
@@ -53,6 +54,7 @@ export class FollowService {
     };
 
     this.follows.set(key, record);
+    cacheService.onFollowChange(creatorId).catch(() => {});
 
     Logger.info('FollowService', `User ${followerId} followed creator ${creatorId}`);
 
@@ -89,6 +91,7 @@ export class FollowService {
     }
 
     this.follows.delete(key);
+    cacheService.onFollowChange(creatorId).catch(() => {});
 
     Logger.info('FollowService', `User ${followerId} unfollowed creator ${creatorId}`);
 

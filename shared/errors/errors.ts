@@ -38,6 +38,18 @@ export class AuthenticationError extends AppError {
   }
 }
 
+export class ForbiddenError extends AppError {
+  constructor(message: string = 'Forbidden: Access denied', details?: unknown) {
+    super(message, 403, 'FORBIDDEN_ERROR', details);
+  }
+}
+
+export class AuthorizationError extends AppError {
+  constructor(message: string = 'Forbidden: Insufficient privileges', details?: unknown) {
+    super(message, 403, 'AUTHORIZATION_ERROR', details);
+  }
+}
+
 export class NotFoundError extends AppError {
   constructor(message: string = 'Requested resource was not found', details?: unknown) {
     super(message, 404, 'NOT_FOUND_ERROR', details);

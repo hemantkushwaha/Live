@@ -6,6 +6,7 @@ import { giftService } from './giftService';
 import { walletService } from './walletService';
 import { ValidationError, NotFoundError } from '../../shared/errors/errors';
 import { Logger } from '../utils/logger';
+import { cacheService } from './cacheService';
 
 export class CreatorService {
   private static instance: CreatorService;
@@ -266,6 +267,7 @@ export class CreatorService {
     if (updates.categories !== undefined) profile.categories = updates.categories;
 
     this.profiles.set(creatorId, profile);
+    cacheService.onProfileUpdate(creatorId).catch(() => {});
     Logger.info('CreatorService', `Updated creator profile for ${creatorId}`);
     return profile;
   }
