@@ -14,7 +14,7 @@ if (process.env.CLOUDINARY_URL) {
 }
 
 const rawEnv: Record<string, string | undefined> = {
-  PORT: '3000',
+  PORT: process.env.PORT || '3000',
   CLIENT_URL: process.env.CLIENT_URL || process.env.APP_URL || 'http://localhost:3000',
   API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:3000/api/v1',
   JWT_SECRET: process.env.JWT_SECRET || 'liveconnect-default-jwt-secret-key-2026',
