@@ -1,12 +1,13 @@
-name: LiveConnect CD Deployment Pipeline
+name: LiveConnect Deployment Verification
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   deploy:
-    name: Production Deployment & Health Verification
+    name: Build Verification
     runs-on: ubuntu-latest
 
     steps:
@@ -16,31 +17,10 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20.x
-          cache: 'npm'
+          node-version: 20
 
-      - name: Install & Build
-        run: |
-          npm ci
-          npm run build
+      - name: Install Dependencies
+        run: npm install
 
-      - name: Deploy to Cloud Run / Kubernetes
-        id: deploy_step
-        run: |
-          echo "Simulating container build and zero-downtime Cloud Run deployment..."
-          echo "DEPLOYMENT_STATUS=SUCCESS" >> $GITHUB_ENV
-
-      - name: Post-Deployment Liveness & Readiness Verification
-        id: health_check
-        run: |
-          echo "Running post-deployment automated health probes..."
-          # Probe /api/v1/live and /api/v1/ready
-          echo "Liveness check (/api/v1/live): OK (200)"
-          echo "Readiness check (/api/v1/ready): OK (200)"
-
-      - name: Automated Rollback Strategy on Failure
-        if: failure()
-        run: |
-          echo "CRITICAL: Health probe failed post-deployment. Executing automated rollback to previous stable release..."
-          echo "Rollback completed successfully."
-          exit 1
+      - name: Build Application
+        run: npm run build
